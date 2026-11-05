@@ -21,6 +21,7 @@
     .intro { padding:40px 0 31px; }
     .eyebrow { font-size:11px; font-weight:800; letter-spacing:2px; color:var(--green); margin:0 0 12px; }
     h1 { font-size:clamp(28px,3.3vw,46px); letter-spacing:-2px; line-height:1.2; margin:0 0 12px; }
+    .today-date { margin:0 0 12px; font-size:13px; color:var(--muted); }
     .intro p:last-child { margin:0; font-size:15px; color:var(--muted); line-height:1.6; }
     .workspace { display:grid; grid-template-columns:300px minmax(0,1fr); gap:24px; align-items:stretch; }
     .roster { border:1px solid var(--line); border-radius:22px; padding:26px 24px 22px; background:#fcfcf8; display:flex; flex-direction:column; }
@@ -89,6 +90,7 @@
     <section class="intro">
       <p class="eyebrow">LET’S HEAR YOUR VOICE</p>
       <h1>오늘의 발표자는 누구일까요<span class="spark">?</span></h1>
+      <p class="today-date" id="today-date"></p>
       <p>명단을 넣고 뽑아 보세요. 한 번 뽑힌 친구는 다음 차례에 쉬어 갑니다.</p>
     </section>
     <div class="workspace">
@@ -128,6 +130,9 @@
     (() => {
       'use strict';
       const $ = id => document.getElementById(id);
+      $('today-date').textContent = new Intl.DateTimeFormat('ko-KR', {
+        timeZone: 'Asia/Seoul', year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+      }).format(new Date());
       const namesInput = $('names');
       const drawButton = $('draw');
       const resetButton = $('reset');
