@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4ee">
+  <title>누가 발표할까요? · 랜덤 발표자 뽑기</title>
+  <style>
+    :root { color-scheme: light; --paper:#f5f4ee; --ink:#233c34; --green:#28654c; --muted:#727a71; --line:#dedfd4; --orange:#e58b42; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif; }
+    button,textarea { font:inherit; }
+    button { cursor:pointer; }
+    button:disabled { cursor:not-allowed; }
+    button:focus-visible,textarea:focus-visible { outline:3px solid var(--orange); outline-offset:5px; }
+    .app { max-width:1600px; margin:auto; padding:34px 48px 24px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:20px; padding-bottom:27px; border-bottom:1px solid var(--line); }
+    .brand { display:flex; align-items:center; gap:12px; font-weight:800; font-size:19px; letter-spacing:-.7px; }
+    .brand-icon { width:34px; height:34px; border-radius:10px; background:var(--green); color:white; display:grid; place-items:center; transform:rotate(-7deg); font-size:22px; }
+    .header-note { color:var(--muted); font-size:13px; }
+    .intro { padding:40px 0 31px; }
+    .eyebrow { font-size:11px; font-weight:800; letter-spacing:2px; color:var(--green); margin:0 0 12px; }
+    h1 { font-size:clamp(28px,3.3vw,46px); letter-spacing:-2px; line-height:1.2; margin:0 0 12px; }
+    .intro p:last-child { margin:0; font-size:15px; color:var(--muted); line-height:1.6; }
+    .workspace { display:grid; grid-template-columns:300px minmax(0,1fr); gap:24px; align-items:stretch; }
+    .roster { border:1px solid var(--line); border-radius:22px; padding:26px 24px 22px; background:#fcfcf8; display:flex; flex-direction:column; }
+    .panel-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
+    h2 { font-size:17px; letter-spacing:-.6px; margin:0; }
+    .badge { background:#e9eee3; color:var(--green); font-size:12px; border-radius:20px; padding:5px 9px; white-space:nowrap; font-weight:700; }
+    label { display:block; font-size:13px; line-height:1.6; color:var(--muted); margin-bottom:17px; }
+    textarea { display:block; flex:1; width:100%; min-height:240px; resize:vertical; border:1px solid var(--line); border-radius:12px; padding:16px; background:var(--paper); color:var(--ink); font-size:16px; line-height:1.9; }
+    textarea::placeholder { color:#a2a79b; }
+    textarea:disabled { opacity:1; color:#7a8279; -webkit-text-fill-color:#7a8279; }
+    .input-note { color:var(--muted); font-size:12px; margin:13px 0 0; line-height:1.6; min-height:39px; }
+    .stage { position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; text-align:center; min-height:500px; border-radius:22px; background:#e9eee3; padding:28px 35px; border:1px solid #dce2d4; }
+    .stage:before,.stage:after { content:""; position:absolute; border:1px solid #d8e0cf; border-radius:50%; width:470px; height:470px; pointer-events:none; }
+    .stage:before { top:-340px; right:-140px; }
+    .stage:after { bottom:-390px; left:-120px; width:550px; height:550px; }
+    .stage-top { width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; position:relative; z-index:1; }
+    .live-label { display:flex; align-items:center; gap:7px; color:var(--green); font-size:12px; font-weight:700; }
+    .dot { width:7px; height:7px; background:var(--green); border-radius:50%; }
+    .fullscreen { border:1px solid #cdd6c5; border-radius:8px; background:transparent; color:var(--green); padding:7px 10px; font-size:12px; }
+    .result-area { flex:1; width:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:22px 0 27px; position:relative; z-index:1; }
+    .result-caption { font-size:15px; color:#64745f; margin:0 0 20px; }
+    .name { font-size:clamp(68px,9vw,150px); font-weight:900; letter-spacing:-.065em; line-height:1.15; width:100%; overflow-wrap:anywhere; margin:0; }
+    .name.is-placeholder { font-size:clamp(34px,4vw,61px); line-height:1.35; letter-spacing:-2.5px; }
+    .remaining { margin:18px 0 0; color:var(--green); font-size:clamp(28px,3.2vw,48px); line-height:1.3; font-weight:800; letter-spacing:-1px; }
+    .hint { font-size:14px; color:#64745f; margin:20px 0 0; line-height:1.6; }
+    .actions { width:100%; max-width:440px; display:flex; gap:10px; position:relative; z-index:1; }
+    .draw { flex:1; border:0; background:var(--green); color:white; font-size:19px; font-weight:800; padding:17px 22px; border-radius:12px; box-shadow:0 4px 0 #1e4f3b; transition:background .15s,transform .15s; }
+    .draw:hover:enabled { background:#1f533e; transform:translateY(-1px); }
+    .draw:disabled { background:#829680; box-shadow:none; }
+    .reset { border:1px solid #c5d0bc; color:var(--ink); background:transparent; border-radius:12px; padding:15px 20px; font-size:14px; font-weight:700; }
+    .reset:hover:enabled { background:#dce5d4; }
+    .reset:disabled { opacity:.5; }
+    .progress-line { position:relative; z-index:1; display:flex; align-items:center; gap:12px; width:100%; max-width:440px; margin-top:23px; color:#687760; font-size:12px; }
+    .track { flex:1; height:4px; background:#d3ddc9; border-radius:10px; overflow:hidden; }
+    .fill { width:0; height:100%; background:var(--green); border-radius:10px; transition:width .3s; }
+    .history { margin-top:25px; padding:23px 0; border-top:1px solid var(--line); }
+    .history-heading { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+    .history-heading h2 { font-size:14px; }
+    .history-heading span { font-size:12px; color:var(--muted); }
+    .history-list { list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:9px; }
+    .history-list li { display:flex; align-items:center; gap:9px; padding:9px 13px; border-radius:8px; border:1px solid var(--line); background:#fcfcf8; font-size:14px; }
+    .history-list .order { color:#889180; font-size:11px; }
+    .history-empty { color:#90968a; font-size:13px; margin:0; }
+    footer { display:flex; justify-content:space-between; gap:16px; color:#92988b; font-size:11px; padding-top:8px; line-height:1.7; }
+    .error { color:#a34128; }
+    .selected .name { animation:reveal .42s ease-out; }
+    .selected .result-caption { color:var(--green); font-weight:700; }
+    .spark { display:inline-block; color:var(--orange); margin-left:6px; }
+    @keyframes reveal { from { transform:translateY(10px) scale(.93); opacity:.4; } to { transform:translateY(0) scale(1); opacity:1; } }
+    .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+    .app:fullscreen { max-width:none; overflow:auto; background:var(--paper); padding:30px 50px; }
+    .app:fullscreen .stage { min-height:55vh; }
+    .app:fullscreen .name:not(.is-placeholder) { font-size:clamp(100px,13vw,240px); }
+    @media(min-width:1600px) { .stage { min-height:570px; } }
+    @media(max-width:850px) { .app { padding:24px; } .workspace { grid-template-columns:240px minmax(0,1fr); gap:16px; } .roster { padding:22px 18px; } .stage { padding:24px 20px; } .reset { padding:14px; } .header-note { display:none; } }
+    @media(max-width:620px) { .app { padding:22px 18px; } header { padding-bottom:20px; } .intro { padding:28px 0 25px; } h1 { letter-spacing:-1.4px; } .workspace { display:flex; flex-direction:column; } .roster { padding:20px; } textarea { min-height:140px; height:140px; } .input-note { min-height:0; } .stage { min-height:420px; } .name { font-size:clamp(70px,17vw,110px); } footer { flex-direction:column; gap:2px; } }
+    @media(prefers-reduced-motion:reduce) { *,*:before,*:after { animation:none!important; transition:none!important; } }
+  </style>
+</head>
+<body>
+  <main class="app" id="app">
+    <header>
+      <div class="brand"><span class="brand-icon" aria-hidden="true">✳</span> 우리 반 발표 시간</div>
+      <span class="header-note">모두에게 한 번씩, 공평한 발표 기회</span>
+    </header>
+    <section class="intro">
+      <p class="eyebrow">LET’S HEAR YOUR VOICE</p>
+      <h1>오늘의 발표자는 누구일까요<span class="spark">?</span></h1>
+      <p>명단을 넣고 뽑아 보세요. 한 번 뽑힌 친구는 다음 차례에 쉬어 갑니다.</p>
+    </section>
+    <div class="workspace">
+      <section class="roster" aria-labelledby="roster-title">
+        <div class="panel-heading"><h2 id="roster-title">학생 명단</h2><span class="badge" id="roster-count">0명</span></div>
+        <label for="names">한 줄에 한 명씩 이름을 입력해 주세요.</label>
+        <textarea id="names" placeholder="김민준&#10;이서연&#10;박지호&#10;최하윤&#10;정도윤" spellcheck="false" aria-describedby="input-note"></textarea>
+        <p class="input-note" id="input-note">빈 줄과 중복된 이름은 자동으로 정리해요.<br>동명이인은 번호를 붙여 구분해 주세요.</p>
+      </section>
+      <section class="stage" id="stage" aria-label="발표자 추첨">
+        <div class="stage-top">
+          <span class="live-label"><span class="dot" aria-hidden="true"></span><span id="stage-status">발표 준비</span></span>
+          <button class="fullscreen" id="fullscreen" type="button" aria-label="전체 화면으로 보기">⛶ 전체 화면</button>
+        </div>
+        <div class="result-area">
+          <p class="result-caption" id="caption">우리 반의 다음 목소리</p>
+          <p class="name is-placeholder" id="result">두근두근,<br>다음은 누구?</p>
+          <p class="remaining" id="remaining">남은 학생 0명</p>
+          <p class="hint" id="hint">학생 명단을 입력하고 뽑기를 눌러 주세요.</p>
+        </div>
+        <div class="actions">
+          <button type="button" class="draw" id="draw">뽑기 <span aria-hidden="true">↗</span></button>
+          <button type="button" class="reset" id="reset">처음부터</button>
+        </div>
+        <div class="progress-line"><div class="track" role="progressbar" aria-label="발표자 추첨 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress"><div class="fill" id="fill"></div></div><span id="completed">0 / 0</span></div>
+      </section>
+    </div>
+    <section class="history" aria-labelledby="history-title">
+      <div class="history-heading"><h2 id="history-title">지금까지 뽑힌 친구들</h2><span id="history-count">0명</span></div>
+      <p class="history-empty" id="history-empty">첫 번째 발표자를 기다리고 있어요.</p>
+      <ol class="history-list" id="history-list"></ol>
+    </section>
+    <footer><span>작은 생각도 좋아요. 여러분의 이야기를 들려주세요.</span><span>명단은 이 화면에서만 사용되며, 외부로 전송되지 않아요.</span></footer>
+    <div class="sr-only" aria-live="polite" aria-atomic="true" id="announcement"></div>
+  </main>
+  <script>
+    (() => {
+      'use strict';
+      const $ = id => document.getElementById(id);
+      const namesInput = $('names');
+      const drawButton = $('draw');
+      const resetButton = $('reset');
+      const result = $('result');
+      const defaultNote = $('input-note').innerHTML;
+      let roster = [], remaining = [], picked = [], started = false, drawing = false;
+      let audioContext;
+
+      function prepareSound() {
+        // Unlock audio during the button click, before the animation finishes.
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          if (!audioContext || audioContext.state === 'closed') audioContext = new AudioContext();
+          if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+        } catch { /* Drawing still works when audio is unavailable. */ }
+      }
+
+      function playFinishSound() {
+        if (!audioContext || audioContext.state !== 'running') return;
+        try {
+          const start = audioContext.currentTime;
+          [659.25, 880].forEach((frequency, index) => {
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            const at = start + index * 0.12;
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, at);
+            gain.gain.setValueAtTime(0, at);
+            gain.gain.linearRampToValueAtTime(0.16, at + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, at + 0.22);
+            oscillator.connect(gain);
+            gain.connect(audioContext.destination);
+            oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+            oscillator.start(at);
+            oscillator.stop(at + 0.24);
+          });
+        } catch { /* An audio error must not interrupt the result. */ }
+      }
+
+      function parseNames() {
+        return [...new Set(namesInput.value.split(/\r?\n/).map(name => name.trim()).filter(Boolean))];
+      }
+
+      function randomIndex(length) {
+        // Rejection sampling avoids favoring any student when reducing random values.
+        const limit = Math.floor(4294967296 / length) * length;
+        const value = new Uint32Array(1);
+        do { crypto.getRandomValues(value); } while (value[0] >= limit);
+        return value[0] % length;
+      }
+
+      function updateCounts() {
+        const total = started ? roster.length : parseNames().length;
+        const left = started ? remaining.length : total;
+        $('roster-count').textContent = `${total}명`;
+        $('remaining').textContent = `남은 학생 ${left}명`;
+        $('completed').textContent = `${picked.length} / ${total}`;
+        $('history-count').textContent = `${picked.length}명`;
+        const percent = total ? Math.round(picked.length / total * 100) : 0;
+        $('fill').style.width = `${percent}%`;
+        $('progress').setAttribute('aria-valuenow', percent);
+      }
+
+      namesInput.addEventListener('input', () => {
+        $('hint').classList.remove('error');
+        $('hint').textContent = parseNames().length ? '준비되었다면, 첫 번째 발표자를 뽑아 보세요.' : '학생 명단을 입력하고 뽑기를 눌러 주세요.';
+        updateCounts();
+      });
+
+      drawButton.addEventListener('click', () => {
+        if (drawing || (started && !remaining.length)) return;
+        if (!started) {
+          roster = parseNames();
+          if (!roster.length) {
+            $('hint').textContent = '먼저 학생 이름을 한 명 이상 입력해 주세요.';
+            $('hint').classList.add('error');
+            $('announcement').textContent = $('hint').textContent;
+            namesInput.focus();
+            return;
+          }
+          remaining = [...roster];
+          started = true;
+          namesInput.disabled = true;
+          $('input-note').textContent = '명단을 바꾸려면 처음부터를 눌러 주세요. 같은 명단으로 다시 뽑을 수도 있어요.';
+        }
+        prepareSound();
+        drawing = true;
+        drawButton.disabled = true;
+        resetButton.disabled = true;
+        drawButton.textContent = '뽑는 중…';
+        $('stage').classList.remove('selected');
+        $('stage-status').textContent = '두근두근 추첨 중';
+        $('caption').textContent = '이번 발표의 주인공은…';
+        $('hint').classList.remove('error');
+        $('hint').textContent = '잠시만요, 곧 이름이 나타나요!';
+        $('announcement').textContent = '발표자를 뽑고 있습니다.';
+        result.classList.remove('is-placeholder');
+        const winnerIndex = randomIndex(remaining.length);
+        const winner = remaining[winnerIndex];
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const duration = reducedMotion ? 180 : 2300;
+        const start = performance.now();
+        let previous = '';
+
+        function finish() {
+          remaining.splice(winnerIndex, 1);
+          picked.push(winner);
+          result.textContent = winner;
+          playFinishSound();
+          $('stage').classList.add('selected');
+          $('caption').textContent = '오늘의 발표자를 소개합니다!';
+          $('stage-status').textContent = remaining.length ? '발표자 선정 완료' : '모두 뽑았어요';
+          $('hint').textContent = remaining.length ? '여러분의 생각을 들려주세요. 박수로 응원해요!' : '모든 학생을 뽑았어요. 처음부터를 누르면 다시 시작해요.';
+          const item = document.createElement('li');
+          const order = document.createElement('span');
+          order.className = 'order';
+          order.textContent = String(picked.length).padStart(2, '0');
+          item.append(order, document.createTextNode(winner));
+          $('history-list').append(item);
+          $('history-empty').hidden = true;
+          drawing = false;
+          resetButton.disabled = false;
+          drawButton.disabled = !remaining.length;
+          drawButton.textContent = remaining.length ? '다음 발표자 뽑기 ↗' : '모두 뽑았어요 ✓';
+          updateCounts();
+          $('announcement').textContent = `발표자는 ${winner}입니다. 남은 학생 ${remaining.length}명.`;
+        }
+
+        function tick() {
+          const elapsed = performance.now() - start;
+          if (elapsed >= duration) { finish(); return; }
+          if (!reducedMotion) {
+            let candidate = roster[randomIndex(roster.length)];
+            if (candidate === previous && roster.length > 1) candidate = roster[(roster.indexOf(candidate) + 1) % roster.length];
+            result.textContent = candidate;
+            previous = candidate;
+          } else { result.textContent = '…'; }
+          setTimeout(tick, 45 + 220 * Math.pow(elapsed / duration, 3));
+        }
+        tick();
+      });
+
+      resetButton.addEventListener('click', () => {
+        if (drawing) return;
+        roster = []; remaining = []; picked = []; started = false;
+        namesInput.disabled = false;
+        $('input-note').innerHTML = defaultNote;
+        $('history-list').replaceChildren();
+        $('history-empty').hidden = false;
+        $('stage').classList.remove('selected');
+        $('stage-status').textContent = '발표 준비';
+        $('caption').textContent = '우리 반의 다음 목소리';
+        result.classList.add('is-placeholder');
+        result.replaceChildren(document.createTextNode('두근두근,'), document.createElement('br'), document.createTextNode('다음은 누구?'));
+        $('hint').classList.remove('error');
+        $('hint').textContent = '새롭게 시작해요. 명단을 수정하거나 바로 뽑아 주세요.';
+        drawButton.disabled = false;
+        drawButton.textContent = '뽑기 ↗';
+        updateCounts();
+        $('announcement').textContent = '추첨 기록을 초기화했습니다. 모든 학생을 다시 뽑을 수 있습니다.';
+      });
+
+      const fullscreenButton = $('fullscreen');
+      if (!document.fullscreenEnabled) fullscreenButton.hidden = true;
+      fullscreenButton.addEventListener('click', async () => {
+        try {
+          if (document.fullscreenElement) await document.exitFullscreen();
+          else await $('app').requestFullscreen();
+        } catch {
+          $('announcement').textContent = '전체 화면을 열 수 없습니다. 브라우저의 전체 화면 기능을 이용해 주세요.';
+        }
+      });
+      document.addEventListener('fullscreenchange', () => {
+        const active = Boolean(document.fullscreenElement);
+        fullscreenButton.textContent = active ? '⛶ 화면 줄이기' : '⛶ 전체 화면';
+        fullscreenButton.setAttribute('aria-label', active ? '전체 화면 종료' : '전체 화면으로 보기');
+      });
+      updateCounts();
+    })();
+  </script>
+</body>
+</html>
